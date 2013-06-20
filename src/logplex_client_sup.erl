@@ -11,7 +11,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/4]).
+-export([start_link/5]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -22,14 +22,14 @@
 %%% API functions
 %%%===================================================================
 
-start_link(SyslogHost, SyslogPort, APIHost, APIPort) ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, [SyslogHost, SyslogPort, APIHost, APIPort]).
+start_link(SyslogHost, SyslogPort, APIHost, Username, Password) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [SyslogHost, SyslogPort, APIHost, Username, Password]).
 
 %%%===================================================================
 %%% Supervisor callbacks
 %%%===================================================================
 
-init([SyslogHost, SyslogPort, APIHost, APIPort]) ->
+init([SyslogHost, SyslogPort, APIHost, Username, Password]) ->
     RestartStrategy = one_for_one,
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
@@ -40,7 +40,7 @@ init([SyslogHost, SyslogPort, APIHost, APIPort]) ->
                                           [SyslogHost, SyslogPort]},
                    permanent, 2000, worker, []}
                  ,{logplex_client_api, {logplex_client_api, start_link,
-                                          [APIHost, APIPort]},
+                                          [APIHost, Username, Password]},
                    permanent, 2000, worker, []}],
 
     {ok, {SupFlags, ChildSpecs}}.

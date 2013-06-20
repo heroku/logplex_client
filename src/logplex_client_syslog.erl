@@ -29,14 +29,15 @@
 %%%===================================================================
 
 start_link(Host, Port) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Host, Port], []).
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [unicode:characters_to_list(Host), Port], []).
 
 -spec send(facility(), severity(),
            Time::iolist(), Source::iolist(),
            Process::iolist(), Msg::iolist(), iolist() | binary()) -> ok.
 send(Facility, Severity, Time, Source, Process, Msg, Token) ->
-    Data = logplex_client_syslog_utils:to_framed_msg({Facility, Severity, Time, Source, Process, Msg}, Token),
-    gen_server:call(?SERVER, {send, Data}).
+    Data =
+        logplex_client_syslog_utils:to_framed_rfc5424(Facility, Severity, Time, Source, Token, Process, undefined, Msg),
+    gen_server:call(?SERVER, {send, iolist_to_binary(Data)}).
 
 %%%===================================================================
 %%% gen_server callbacks

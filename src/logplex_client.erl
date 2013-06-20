@@ -13,9 +13,9 @@ send(Facility, Severity, Time, Source, Process, Msg, Token) ->
     logplex_client_syslog:send(Facility, Severity, Time, Source, Process, Msg, Token).
 
 -spec create_session(string()) -> {url, binary()}.
-create_session(_ChannelId) ->
-    ok.
+create_session(ChannelId) ->
+    logplex_client_api:create_session(ChannelId).
 
 -spec fetch_logs(binary()) -> {ok, list()}.
-fetch_logs(_Session) ->
-    ok.
+fetch_logs(SessionsUrl) ->
+    logplex_client_api:fetch_logs(SessionsUrl).
