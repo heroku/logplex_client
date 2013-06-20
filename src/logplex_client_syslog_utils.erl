@@ -23,7 +23,7 @@
 to_msg({Facility, Severity, Time, Source, Process, Msg}, Token) ->
     [ <<"<">>, pri(Facility, Severity), <<">1 ">>,
       Time, $\s, Token, $\s, Source, $\s, Process, <<" - - ">>,
-      logplex_utils:nl(Msg) ].
+      nl(Msg) ].
 
 rfc5424({Facility, Severity, Time, Source, Process, Msg}) ->
     rfc5424(Facility, Severity, Time, Source,
@@ -155,3 +155,13 @@ severity_to_int(I) when is_integer(I),
     I;
 severity_to_int(A) when is_atom(A) ->
     element(1, lists:keyfind(A, 2, severities())).
+
+-spec nl(iolist() | binary()) -> iolist().
+nl(<<>>) -> <<"\n">>;
+nl(Msg) when is_binary(Msg) ->
+    case binary:at(Msg, byte_size(Msg)-1) of
+        $\n -> [Msg];
+        _ -> [Msg, $\n]
+    end;
+nl(Msg) when is_list(Msg) ->
+    nl(iolist_to_binary(Msg)).
