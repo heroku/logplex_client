@@ -5,19 +5,24 @@
 %% @end
 -module(logplex_client_syslog_utils).
 
--export([to_msg/2
-         ,from_msg/1
-         ,frame/1
-         ,datetime/1
-         ,facility_to_int/1
-         ,severity_to_int/1
-         ,fmt/7
-         ,rfc5424/1
-         ,rfc5424/8
-         ,overflow_msg/2
+-export([to_framed_msg/2
+        ,to_msg/2
+        ,from_msg/1
+        ,frame/1
+        ,datetime/1
+        ,facility_to_int/1
+        ,severity_to_int/1
+        ,fmt/7
+        ,rfc5424/1
+        ,rfc5424/8
+        ,overflow_msg/2
         ]).
 
 -include("logplex_client.hrl").
+
+-spec to_framed_msg(syslog_msg(), iolist() | binary()) -> iolist().
+to_framed_msg(SyslogMsg, Token) ->
+    frame(to_msg(SyslogMsg, Token)).
 
 -spec to_msg(syslog_msg(), iolist() | binary()) -> iolist().
 to_msg({Facility, Severity, Time, Source, Process, Msg}, Token) ->
