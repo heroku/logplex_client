@@ -1,0 +1,13 @@
+.eunit
+deps
+*.o
+*.beam
+*.plt
+.erlang.cookie
+ebin
+.depsolver_plt
+_rel
+log
+erl_crash.dump
+keys.sh
+*.swp

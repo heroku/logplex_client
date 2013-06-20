@@ -1,0 +1,16 @@
+%% -*- erlang -*-
+{application, logplex_client,
+ [{description, "Logplex Client"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {start_phases, []},
+  {applications, [
+                 kernel
+                 ,stdlib
+                 ,sasl
+                 ,lager
+                 ,jsx
+                 ,hackney
+                 ]},
+  {env, []}
+ ]}.
