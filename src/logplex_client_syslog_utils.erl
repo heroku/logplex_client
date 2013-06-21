@@ -6,14 +6,15 @@
 -module(logplex_client_syslog_utils).
 
 -export([to_msg/2
-         ,from_msg/1
-         ,frame/1
-         ,datetime/1
-         ,facility_to_int/1
-         ,severity_to_int/1
-         ,fmt/7
-         ,rfc5424/1
-         ,rfc5424/8
+        ,from_msg/1
+        ,frame/1
+        ,datetime/1
+        ,facility_to_int/1
+        ,severity_to_int/1
+        ,fmt/7
+        ,rfc5424/1
+        ,rfc5424/8
+        ,to_framed_rfc5424/8
         ]).
 
 -type syslog_msg() :: {0..128, 0..7,
@@ -43,6 +44,9 @@ rfc5424(Facility, Severity, Time, Host, AppName, ProcID, MsgID, Msg) ->
           _ -> [$\s, Msg]
       end
     ].
+
+to_framed_rfc5424(Facility, Severity, Time, Host, AppName, ProcID, MsgID, Msg) ->
+    frame(rfc5424(Facility, Severity, Time, Host, AppName, ProcID, MsgID, Msg)).
 
 nvl(undefined) -> $-;
 nvl(Val) -> Val.
