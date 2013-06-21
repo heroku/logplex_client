@@ -69,7 +69,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 create_session_(Url, Auth, ChannelId) ->
-    Body = make_request(post, Url, <<"/v2/sessions">>, Auth, jsx:encode([{channel_id, ChannelId}]), 201),
+    Body = make_request(post, Url, <<"/v2/canary-sessions">>, Auth, jsx:encode([{channel_id, ChannelId}]), 201),
     [{<<"url">>, SessionsUrl}] = jsx:decode(Body),
     SessionsUrl.
 
