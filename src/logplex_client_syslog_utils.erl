@@ -1,34 +1,34 @@
-%% @copyright Geoff Cant
+%% @copyright Heroku (2012)
 %% @author Geoff Cant <nem@erlang.geek.nz>
 %% @version {@vsn}, {@date} {@time}
 %% @doc Syslog message formatting utilities.
 %% @end
 -module(logplex_client_syslog_utils).
 
--export([to_framed_msg/2
-        ,to_msg/2
-        ,from_msg/1
-        ,frame/1
-        ,datetime/1
-        ,facility_to_int/1
-        ,severity_to_int/1
-        ,fmt/7
-        ,rfc5424/1
-        ,rfc5424/8
-        ,overflow_msg/2
+-export([to_msg/2
+         ,from_msg/1
+         ,frame/1
+         ,datetime/1
+         ,facility_to_int/1
+         ,severity_to_int/1
+         ,fmt/7
+         ,rfc5424/1
+         ,rfc5424/8
         ]).
 
--include("logplex_client.hrl").
+-type syslog_msg() :: {0..128, 0..7,
+                       Time::iolist(), Source::iolist(),
+                       Process::iolist(), Msg::iolist()}.
 
--spec to_framed_msg(syslog_msg(), iolist() | binary()) -> iolist().
-to_framed_msg(SyslogMsg, Token) ->
-    frame(to_msg(SyslogMsg, Token)).
+-export_type([ syslog_msg/0
+               ,facility/0
+               ,severity/0
+             ]).
 
 -spec to_msg(syslog_msg(), iolist() | binary()) -> iolist().
 to_msg({Facility, Severity, Time, Source, Process, Msg}, Token) ->
     [ <<"<">>, pri(Facility, Severity), <<">1 ">>,
-      Time, $\s, Token, $\s, Source, $\s, Process, <<" - - ">>,
-      nl(Msg) ].
+      Time, $\s, Token, $\s, Source, $\s, Process, <<" - - ">>, Msg ].
 
 rfc5424({Facility, Severity, Time, Source, Process, Msg}) ->
     rfc5424(Facility, Severity, Time, Source,
@@ -47,23 +47,11 @@ rfc5424(Facility, Severity, Time, Host, AppName, ProcID, MsgID, Msg) ->
 nvl(undefined) -> $-;
 nvl(Val) -> Val.
 
--spec overflow_msg(N::non_neg_integer(), datetime()) -> syslog_msg().
-overflow_msg(N, When) ->
-    fmt(local5,
-        warning,
-        now,
-        "heroku",
-        "logplex",
-        "Error L10 (output buffer overflow): "
-        "~p messages dropped since ~s.",
-        [N,
-         datetime(When)]).
-
 from_msg(Msg) when is_binary(Msg) ->
     %% <40>1 2010-11-10T17:16:33-08:00 domU-12-31-39-13-74-02 t.xxx web.1 - - State changed from created to starting
     %% <PriFac>1 Time Host Token Process - - Msg
-    case re:run(Msg, "^<(\\d+)>1 (\\S+) \\S+ (\\S+) (\\S+) \\S+ (?:-|(?:\\[(?:[^\\]]|\\\\])+\\])+) (.*)",
-                [dotall, {capture, all_but_first, binary}]) of
+    case re:run(Msg, "^<(\\d+)>1 (\\S+) \\S+ (\\S+) (\\S+) \\S+ \\S+ (.*)",
+                [{capture, all_but_first, binary}]) of
         {match, [PriFac, Time, Source, Ps, Content]} ->
             <<Facility:5, Severity:3>> =
                 << (list_to_integer(binary_to_list(PriFac))):8 >>,
@@ -92,15 +80,14 @@ frame(Msg) when is_binary(Msg); is_list(Msg) ->
       " ",
       Msg ].
 
--spec datetime(datetime()) -> iolist().
 datetime(now) ->
-    datetime(calendar:universal_time());
+    datetime(os:timestamp());
 datetime({_,_,_} = Now) ->
     DT = calendar:now_to_universal_time(Now),
     datetime(DT);
 datetime({{Y,M,D},{H,MM,S}}) ->
     io_lib:format("~4.10.0B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~2.10.0B"
-                  "+00:00",
+                  "Z",
                   [Y,M,D, H,MM,S]).
 
 fmt(Facility, Severity, Time, Source, Process, Fmt, Args) ->
@@ -111,6 +98,12 @@ fmt(Facility, Severity, Time, Source, Process, Fmt, Args) ->
      Process,
      io_lib:format(Fmt, Args)}.
 
+-type facility() :: 0..127 |
+                    'kernel' | 'user' | 'mail' | 'system' | 'internal' | 'lp' |
+                    'news' | 'uucp' | 'clock' | 'security2' | 'ftp' | 'ntp' |
+                    'audit' | 'alert' | 'clock2' | 'local0' | 'local1' |
+                    'local2' | 'local3' | 'local4' | 'local5' | 'local6' |
+                    'local7'.
 facilities() ->
     [ { 0, kernel, "kernel messages"}
      ,{ 1, user, "user-level messages"}
@@ -144,6 +137,15 @@ facility_to_int(I)
 facility_to_int(A) when is_atom(A) ->
     element(1, lists:keyfind(A, 2, facilities())).
 
+-type severity() :: 0..7 |
+                    'emergency' |
+                    'alert' |
+                    'critical' |
+                    'error' |
+                    'warning' |
+                    'notice' |
+                    'info' |
+                    'debug'.
 severities() ->
     [ {0, emergency, "Emergency: system is unusable"}
      ,{1, alert, "Alert: action must be taken immediately"}
@@ -155,18 +157,7 @@ severities() ->
      ,{7, debug, "Debug: debug-level messages"}].
 
 -spec severity_to_int(severity()) -> 0..7.
-severity_to_int(I) when is_integer(I),
-                        0 =< I, I =< 7 ->
+severity_to_int(I) when is_integer(I) ->
     I;
 severity_to_int(A) when is_atom(A) ->
     element(1, lists:keyfind(A, 2, severities())).
-
--spec nl(iolist() | binary()) -> iolist().
-nl(<<>>) -> <<"\n">>;
-nl(Msg) when is_binary(Msg) ->
-    case binary:at(Msg, byte_size(Msg)-1) of
-        $\n -> [Msg];
-        _ -> [Msg, $\n]
-    end;
-nl(Msg) when is_list(Msg) ->
-    nl(iolist_to_binary(Msg)).
