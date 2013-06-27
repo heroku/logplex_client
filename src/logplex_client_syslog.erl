@@ -36,7 +36,7 @@ start_link(Host, Port) ->
            Process::iolist(), Msg::iolist(), iolist() | binary()) -> ok.
 send(Facility, Severity, Time, Source, Process, Msg, Token) ->
     Data =
-        logplex_client_syslog_utils:to_framed_rfc5424(Facility, Severity, Time, Source, Token, Process, undefined, Msg),
+        logplex_client_syslog_utils:to_framed_rfc5424(Facility, Severity, Time, Source, Token, Process, undefined, undefined, Msg),
     gen_server:call(?SERVER, {send, iolist_to_binary(Data)}).
 
 %%%===================================================================
