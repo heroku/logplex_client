@@ -69,12 +69,15 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 create_session_(Url, Auth, ChannelId) ->
+    %% We should probably generalize this client to not only use canaries
     Body = make_request(post, Url, <<"/v2/canary-sessions">>, Auth, jsx:encode([{channel_id, ChannelId}]), 201),
     [{<<"url">>, SessionsUrl}] = jsx:decode(Body),
     SessionsUrl.
 
 fetch_logs_(Url, Auth, SessionUrl) ->
-    make_request(get, Url, <<SessionUrl/binary, "?srv=12345">>, Auth, [], 200).
+    %% Logs obtained from the stream are line-break delimited
+    Logs = make_request(get, Url, <<SessionUrl/binary, "?srv=12345">>, Auth, [], 200),
+    binary:split(Logs, <<"\n">>, [global]).
 
 make_request(Method, Url, Path, Auth, Body, ExpectedStatus) ->
     {ok, ExpectedStatus, _RespHeaders, Client} = hackney:request(Method, <<Url/binary, Path/binary>>,
