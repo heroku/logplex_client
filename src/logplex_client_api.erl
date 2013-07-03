@@ -27,8 +27,8 @@
 %%% API
 %%%===================================================================
 
-start_link(Host, Username, Password) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Host, Username, Password], []).
+start_link(Url, Username, Password) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Url, Username, Password], []).
 
 fetch_logs(SessionUrl) ->
     gen_server:call(?SERVER, {fetch_logs, SessionUrl}).
@@ -40,9 +40,8 @@ create_session(ChannelId) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-init([Host, Username, Password]) ->
+init([Url, Username, Password]) ->
     Auth = <<"Basic ", (base64:encode(<<Username/binary, ":", Password/binary>>))/binary>>,
-    Url = <<"https://", Host/binary>>,
     {ok, #state{url=Url, auth=Auth}}.
 
 handle_call({create_session, ChannelId}, _From, State=#state{url=Url, auth=Auth}) ->

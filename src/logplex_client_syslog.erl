@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2
+-export([start_link/1
         ,send/7]).
 
 %% gen_server callbacks
@@ -19,6 +19,7 @@
          terminate/2, code_change/3]).
 
 -include("logplex_client.hrl").
+-include_lib("ex_uri/include/ex_uri.hrl").
 
 -define(SERVER, ?MODULE).
 
@@ -27,9 +28,8 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
-
-start_link(Host, Port) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [unicode:characters_to_list(Host), Port], []).
+start_link(TcpUrl) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [unicode:characters_to_list(TcpUrl)], []).
 
 -spec send(facility(), severity(),
            Time::iolist(), Source::iolist(),
@@ -43,7 +43,10 @@ send(Facility, Severity, Time, Source, Process, Msg, Token) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-init([Host, Port]) ->
+init([TcpUrl]) ->
+    {ok, #ex_uri{
+            authority=#ex_uri_authority{host=Host, port=Port}
+         }, _} = ex_uri:decode(TcpUrl),
     {ok, Socket} = gen_tcp:connect(Host, Port, [binary, {active, true}]),
     {ok, #state{host=Host, port=Port, socket=Socket}}.
 

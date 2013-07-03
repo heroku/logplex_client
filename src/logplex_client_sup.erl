@@ -22,14 +22,18 @@
 %%% API functions
 %%%===================================================================
 
-start_link(SyslogHost, SyslogPort, APIHost, Username, Password) ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, [SyslogHost, SyslogPort, APIHost, Username, Password]).
+start_link(SyslogTcpUrl, SyslogHttpUrl,
+           APIUrl, Username, Password) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE,
+        {[SyslogTcpUrl],
+         [SyslogHttpUrl],
+         [APIUrl, Username, Password]}).
 
 %%%===================================================================
 %%% Supervisor callbacks
 %%%===================================================================
 
-init([SyslogHost, SyslogPort, APIHost, Username, Password]) ->
+init({SyslogArgs, _HttpArgs, APIArgs}) ->
     RestartStrategy = one_for_one,
     MaxRestarts = 1000,
     MaxSecondsBetweenRestarts = 3600,
@@ -37,10 +41,10 @@ init([SyslogHost, SyslogPort, APIHost, Username, Password]) ->
     SupFlags = {RestartStrategy, MaxRestarts, MaxSecondsBetweenRestarts},
 
     ChildSpecs = [{logplex_client_syslog, {logplex_client_syslog, start_link,
-                                          [SyslogHost, SyslogPort]},
+                                           SyslogArgs},
                    permanent, 2000, worker, []}
                  ,{logplex_client_api, {logplex_client_api, start_link,
-                                          [APIHost, Username, Password]},
+                                        APIArgs},
                    permanent, 2000, worker, []}],
 
     {ok, {SupFlags, ChildSpecs}}.
