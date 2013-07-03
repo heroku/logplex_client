@@ -77,7 +77,7 @@ create_session_(Url, Auth, ChannelId) ->
 fetch_logs_(Url, Auth, SessionUrl) ->
     %% Logs obtained from the stream are line-break delimited
     Logs = make_request(get, Url, <<SessionUrl/binary, "?srv=12345">>, Auth, [], 200),
-    binary:split(Logs, <<"\n">>, [global]).
+    binary:split(Logs, <<"\n">>, [global,trim]).
 
 make_request(Method, Url, Path, Auth, Body, ExpectedStatus) ->
     {ok, ExpectedStatus, _RespHeaders, Client} = hackney:request(Method, <<Url/binary, Path/binary>>,
