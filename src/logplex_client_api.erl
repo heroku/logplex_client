@@ -31,10 +31,10 @@ start_link(Url, Username, Password) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Url, Username, Password], []).
 
 fetch_logs(SessionUrl) ->
-    gen_server:call(?SERVER, {fetch_logs, SessionUrl}).
+    gen_server:call(?SERVER, {fetch_logs, SessionUrl}, 20000).
 
 create_session(ChannelId) ->
-    gen_server:call(?SERVER, {create_session, ChannelId}).
+    gen_server:call(?SERVER, {create_session, ChannelId}, 20000).
 
 %%%===================================================================
 %%% gen_server callbacks
