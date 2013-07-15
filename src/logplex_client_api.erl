@@ -82,6 +82,6 @@ make_request(Method, Url, Path, Auth, Body, ExpectedStatus) ->
     {ok, ExpectedStatus, _RespHeaders, Client} = hackney:request(Method, <<Url/binary, Path/binary>>,
                                                                  [{<<"Authorization">>, Auth}],
                                                                  Body, []),
-    lager:info("at=make_request status=~p headers=~p", [ExpectedStatus, _RespHeaders]),
+    lager:info("at=make_request status=~p", [ExpectedStatus]),
     {ok, Result, _Client1} = hackney:body(Client),
     Result.
